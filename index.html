@@ -146,6 +146,8 @@ tr:hover td{background:var(--bg4)}
   </div>
   <div class="topbar-right">
     <div id="alertCount" style="display:none" class="badge-count">0</div>
+    <button class="btn btn-ghost btn-sm" title="Descargar Backup" onclick="showModal('backupModal')">💾 Backup</button>
+    <button class="btn btn-ghost btn-sm" title="Imprimir" id="btnPrint" style="display:none" onclick="imprimirReporte()">🖨️ Imprimir</button>
   </div>
 </div>
 
@@ -316,8 +318,8 @@ tr:hover td{background:var(--bg4)}
         <div class="sec-title">Reportes de Gastos</div>
         <div class="sec-sub">Análisis mensual de flota</div>
       </div>
-      <div style="display:flex;gap:10px">
-        <select id="mesReporte" onchange="renderReporte()" style="background:var(--bg3);border:1px solid var(--border2);border-radius:8px;color:var(--txt);padding:8px 12px">
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <select id="mesReporte" onchange="renderReporte()" style="background:var(--bg3);border:1px solid var(--border2);border-radius:8px;color:var(--txt);padding:8px 12px;font-family:var(--font)">
           <option value="202412">Diciembre 2024</option>
           <option value="202501">Enero 2025</option>
           <option value="202502">Febrero 2025</option>
@@ -338,7 +340,8 @@ tr:hover td{background:var(--bg4)}
           <option value="202605">Mayo 2026</option>
           <option value="202606">Junio 2026</option>
         </select>
-        <button class="btn btn-primary" onclick="showModal('exportModal')">📥 Exportar</button>
+        <button class="btn btn-primary" onclick="showModal('exportModal')">📊 Exportar</button>
+        <button class="btn btn-primary" onclick="imprimirReporte()" style="background:var(--teal);border:none">🖨️ Imprimir</button>
       </div>
     </div>
     <div id="reporteContainer" style="margin-top:20px"></div>
@@ -624,17 +627,56 @@ tr:hover td{background:var(--bg4)}
       <button class="btn-close" onclick="hideModal('exportModal')">✕</button>
     </div>
     <div class="modal-body">
-      <div class="form-grid">
-        <div class="form-group">
-          <label>Selecciona qué exportar:</label>
+      <div style="margin-bottom:16px">
+        <div class="sec-title" style="margin-bottom:12px">Exportar por CSV</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <button class="btn btn-primary btn-sm" onclick="exportarCSV('vehiculos')">Vehículos</button>
+          <button class="btn btn-primary btn-sm" onclick="exportarCSV('conductores')">Conductores</button>
+          <button class="btn btn-primary btn-sm" onclick="exportarCSV('mantenimientos')">Mantenimientos</button>
+          <button class="btn btn-primary btn-sm" onclick="exportarCSV('gastos')">Gastos</button>
+          <button class="btn btn-primary btn-sm" onclick="exportarCSV('reporte')">Reporte Completo</button>
         </div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        <button class="btn btn-primary" onclick="exportarCSV('vehiculos')">Vehículos</button>
-        <button class="btn btn-primary" onclick="exportarCSV('conductores')">Conductores</button>
-        <button class="btn btn-primary" onclick="exportarCSV('mantenimientos')">Mantenimientos</button>
-        <button class="btn btn-primary" onclick="exportarCSV('gastos')">Gastos</button>
-        <button class="btn btn-primary" onclick="exportarCSV('reporte')">Reporte Completo</button>
+      <div style="border-top:1px solid var(--border);padding-top:16px">
+        <div class="sec-title" style="margin-bottom:12px">Exportar por JSON</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <button class="btn btn-accent btn-sm" style="background:var(--teal-bg);color:var(--teal)" onclick="exportarJSON('complete')">Base Completa</button>
+          <button class="btn btn-accent btn-sm" style="background:var(--purple-bg);color:var(--purple)" onclick="exportarJSON('vehiculos')">Solo Vehículos</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL BACKUP -->
+<div id="backupModal" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Gestión de Backups</div>
+      <button class="btn-close" onclick="hideModal('backupModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="margin-bottom:20px">
+        <div class="sec-title" style="margin-bottom:12px">📥 Descargar Backup</div>
+        <p style="font-size:12px;color:var(--txt2);margin-bottom:10px">Descarga un backup JSON completo de toda la base de datos. Puedes restaurarlo después si es necesario.</p>
+        <button class="btn btn-green" style="width:100%;justify-content:center" onclick="descargarBackup()">💾 Descargar Backup Completo</button>
+      </div>
+
+      <div style="border-top:1px solid var(--border);padding-top:16px;margin-bottom:20px">
+        <div class="sec-title" style="margin-bottom:12px">📤 Restaurar desde Backup</div>
+        <p style="font-size:12px;color:var(--txt2);margin-bottom:10px">Sube un archivo JSON de backup para restaurar todos los datos. <strong>Esto sobrescribirá los datos actuales.</strong></p>
+        <div style="display:flex;gap:10px">
+          <input type="file" id="backupInput" accept=".json" style="flex:1;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;color:var(--txt);padding:9px 12px;font-size:13px">
+          <button class="btn btn-primary" onclick="restaurarBackup()">Restaurar</button>
+        </div>
+      </div>
+
+      <div style="border-top:1px solid var(--border);padding-top:16px">
+        <div class="sec-title" style="margin-bottom:12px">⚙️ Opciones Avanzadas</div>
+        <div style="display:grid;grid-template-columns:1fr;gap:8px">
+          <button class="btn btn-red" style="justify-content:center" onclick="limpiarBaseDatos()">🗑️ Limpiar Base de Datos (Peligroso)</button>
+          <div style="font-size:11px;color:var(--txt3);padding:8px;background:var(--bg3);border-radius:6px">Última modificación: <span id="lastModified">—</span></div>
+        </div>
       </div>
     </div>
   </div>
@@ -657,6 +699,8 @@ function loadDB(){
 
 function saveDB(){
   localStorage.setItem('flotaDB',JSON.stringify(db));
+  localStorage.setItem('flotaDB_lastMod',new Date().toLocaleString('es-CO'));
+  actualizarUltimaModificacion();
 }
 
 function initSampleData(){
@@ -683,13 +727,14 @@ function initSampleData(){
   saveDB();
 }
 
-// ============================================================ PAGE NAVIGATION ============================================================
+// ========================================================== PAGE NAVIGATION ============================================================
 function goPage(p){
   document.querySelectorAll('.page').forEach(pg=>pg.classList.remove('active'));
   document.getElementById(p).classList.add('active');
   document.querySelectorAll('.nav-btn').forEach(btn=>btn.classList.remove('active'));
   event.target.classList.add('active');
   currentPage=p;
+  document.getElementById('btnPrint').style.display=p==='reportes'?'inline-flex':'none';
   if(p==='vehiculos')renderVehiculos();
   if(p==='conductores')renderConductores();
   if(p==='mantenimientos')renderMantenimientos();
@@ -818,10 +863,13 @@ function guardarVehiculo(){
   if(editingId){
     const idx=db.vehiculos.findIndex(v=>v.id===editingId);
     db.vehiculos[idx]=veh;
+    alert('✓ Vehículo actualizado');
   }else{
     db.vehiculos.push(veh);
+    alert('✓ Vehículo creado');
   }
   saveDB();hideModal('vehModal');editingId=null;
+  document.getElementById('vehModalTitle').textContent='Nuevo Vehículo';
   document.getElementById('vehPlaca').value='';document.getElementById('vehNombre').value='';document.getElementById('vehMarca').value='';document.getElementById('vehModelo').value='';document.getElementById('vehEstado').value='Activo';
   renderDashboard();filtrarVehiculos();
 }
@@ -877,7 +925,7 @@ function filtrarConductores(){
       <td>${c.licVto?fmtDate(c.licVto):'—'} ${licBadge}</td>
       <td>${v?v.placa:'—'}</td>
       <td><span class="badge ${c.estado==='Activo'?'badge-green':'badge-red'}">${c.estado}</span></td>
-      <td style="font-size:11px"><button class="btn btn-sm btn-ghost" onclick="editarCond('${c.id}')">Editar</button> <button class="btn btn-sm btn-red" onclick="eliminarCond('${c.id}')">Del</button></td>
+      <td style="font-size:11px;display:flex;gap:4px"><button class="btn btn-sm btn-ghost" onclick="editarCond('${c.id}')">✏️ Editar</button> <button class="btn btn-sm btn-red" onclick="eliminarCond('${c.id}')">🗑️</button></td>
     </tr>`;
   });
   document.getElementById('condTbody').innerHTML=html||'<tr><td colspan="8" style="text-align:center;padding:30px">Sin conductores</td></tr>';
@@ -900,10 +948,13 @@ function guardarConductor(){
   if(editingId){
     const idx=db.conductores.findIndex(c=>c.id===editingId);
     db.conductores[idx]=cond;
+    alert('✓ Conductor actualizado');
   }else{
     db.conductores.push(cond);
+    alert('✓ Conductor creado');
   }
   saveDB();hideModal('condModal');editingId=null;
+  document.getElementById('condModalTitle').textContent='Nuevo Conductor';
   document.getElementById('condNombre').value='';
   renderDashboard();filtrarConductores();
 }
@@ -955,7 +1006,7 @@ function filtrarMantenimientos(){
       <td style="font-size:11px">${m.repuestos||'—'}</td>
       <td class="td-mono">${fmtMoney(m.valor)}</td>
       <td style="font-size:11px">${m.proxFecha?fmtDate(m.proxFecha):'—'} (${m.proxKm} km)</td>
-      <td style="font-size:11px"><button class="btn btn-sm btn-ghost" onclick="editarMant('${m.id}')">Editar</button> <button class="btn btn-sm btn-red" onclick="eliminarMant('${m.id}')">Del</button></td>
+      <td style="font-size:11px;display:flex;gap:4px"><button class="btn btn-sm btn-ghost" onclick="editarMant('${m.id}')">✏️ Editar</button> <button class="btn btn-sm btn-red" onclick="eliminarMant('${m.id}')">🗑️</button></td>
     </tr>`;
   });
   document.getElementById('mantTbody').innerHTML=html||'<tr><td colspan="8" style="text-align:center;padding:30px">Sin mantenimientos</td></tr>';
@@ -982,8 +1033,10 @@ function guardarMantenimiento(){
   if(editingId){
     const idx=db.mantenimientos.findIndex(m=>m.id===editingId);
     db.mantenimientos[idx]=mant;
+    alert('✓ Mantenimiento actualizado');
   }else{
     db.mantenimientos.push(mant);
+    alert('✓ Mantenimiento registrado');
   }
   saveDB();hideModal('mantModal');editingId=null;
   document.getElementById('mantFecha').value='';
@@ -1036,7 +1089,7 @@ function filtrarGastos(){
       <td>${g.cat}</td>
       <td style="font-size:11px">${g.desc||'—'}</td>
       <td class="td-mono">${fmtMoney(g.valor)}</td>
-      <td style="font-size:11px"><button class="btn btn-sm btn-ghost" onclick="editarGasto('${g.id}')">Editar</button> <button class="btn btn-sm btn-red" onclick="eliminarGasto('${g.id}')">Del</button></td>
+      <td style="font-size:11px;display:flex;gap:4px"><button class="btn btn-sm btn-ghost" onclick="editarGasto('${g.id}')">✏️ Editar</button> <button class="btn btn-sm btn-red" onclick="eliminarGasto('${g.id}')">🗑️</button></td>
     </tr>`;
   });
   document.getElementById('gastoTbody').innerHTML=html||'<tr><td colspan="6" style="text-align:center;padding:30px">Sin gastos</td></tr>';
@@ -1056,8 +1109,10 @@ function guardarGasto(){
   if(editingId){
     const idx=db.gastos.findIndex(g=>g.id===editingId);
     db.gastos[idx]=gasto;
+    alert('✓ Gasto actualizado');
   }else{
     db.gastos.push(gasto);
+    alert('✓ Gasto registrado');
   }
   saveDB();hideModal('gastoModal');editingId=null;
   document.getElementById('gastoFecha').value='';
@@ -1223,9 +1278,201 @@ function exportarCSV(tipo){
   hideModal('exportModal');
 }
 
+// ============================================================ BACKUP & RESTORE ============================================================
+function descargarBackup(){
+  const timestamp=new Date().toISOString().slice(0,10);
+  const filename=`backup_flota_${timestamp}.json`;
+  const dataStr=JSON.stringify(db,null,2);
+  const dataBlob=new Blob([dataStr],{type:'application/json'});
+  const url=URL.createObjectURL(dataBlob);
+  const link=document.createElement('a');
+  link.href=url;
+  link.download=filename;
+  link.click();
+  URL.revokeObjectURL(url);
+  alert('✓ Backup descargado: '+filename);
+  hideModal('backupModal');
+}
+
+function restaurarBackup(){
+  const file=document.getElementById('backupInput').files[0];
+  if(!file){alert('Selecciona un archivo JSON');return;}
+  if(!confirm('⚠️ Esto sobrescribirá TODOS los datos actuales. ¿Continuar?'))return;
+  
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      const restored=JSON.parse(e.target.result);
+      if(!restored.vehiculos||!restored.conductores){
+        alert('Archivo JSON inválido');return;
+      }
+      db=restored;
+      saveDB();
+      alert('✓ Datos restaurados exitosamente');
+      location.reload();
+    }catch(err){
+      alert('Error al leer archivo: '+err.message);
+    }
+  };
+  reader.readAsText(file);
+}
+
+function limpiarBaseDatos(){
+  if(!confirm('⚠️ PELIGRO: Esto eliminará TODOS los datos. Escribe "BORRAR" para confirmar'))return;
+  const confirmText=prompt('Escribe BORRAR para confirmar:');
+  if(confirmText==='BORRAR'){
+    db={vehiculos:[],conductores:[],mantenimientos:[],gastos:[],talleres:[]};
+    saveDB();
+    alert('Base de datos limpiada');
+    location.reload();
+  }else{
+    alert('Operación cancelada');
+  }
+}
+
+function exportarJSON(tipo){
+  let data={},filename='';
+  if(tipo==='complete'){
+    data=db;
+    filename=`flota_completa_${new Date().toISOString().slice(0,10)}.json`;
+  }else if(tipo==='vehiculos'){
+    data={vehiculos:db.vehiculos};
+    filename=`vehiculos_${new Date().toISOString().slice(0,10)}.json`;
+  }
+  const dataStr=JSON.stringify(data,null,2);
+  const dataBlob=new Blob([dataStr],{type:'application/json'});
+  const url=URL.createObjectURL(dataBlob);
+  const link=document.createElement('a');
+  link.href=url;
+  link.download=filename;
+  link.click();
+  URL.revokeObjectURL(url);
+  hideModal('exportModal');
+}
+
+// ============================================================ PRINT ============================================================
+function imprimirReporte(){
+  const mesNum=parseInt(document.getElementById('mesReporte').value);
+  const mes=Math.floor(mesNum%100);
+  const anio=Math.floor(mesNum/100);
+  const mesLabel=new Date(anio,mes-1).toLocaleString('es-CO',{month:'long',year:'numeric'});
+  
+  let htmlPrint=`
+    <!DOCTYPE html>
+    <html><head>
+    <meta charset="UTF-8">
+    <title>Reporte Flota ${mesLabel}</title>
+    <style>
+      body{font-family:Arial,sans-serif;margin:20px;background:#fff;color:#000}
+      h1{text-align:center;border-bottom:3px solid #1d4ed8;padding-bottom:10px}
+      h2{color:#1d4ed8;margin-top:20px;border-bottom:2px solid #e0e0e0;padding-bottom:8px}
+      table{width:100%;border-collapse:collapse;margin:15px 0}
+      th{background:#1d4ed8;color:white;padding:10px;text-align:left;font-weight:bold}
+      td{padding:8px;border-bottom:1px solid #ddd}
+      tr:nth-child(even){background:#f9f9f9}
+      .summary{display:flex;justify-content:space-around;margin:20px 0;padding:15px;background:#f0f0f0;border-radius:5px}
+      .summary-item{text-align:center}
+      .summary-val{font-size:24px;font-weight:bold;color:#1d4ed8}
+      .summary-label{font-size:12px;color:#666;margin-top:5px}
+      .page-break{page-break-after:always;margin:30px 0;border-bottom:2px dashed #ccc}
+      .footer{text-align:center;margin-top:40px;font-size:10px;color:#999;border-top:1px solid #ddd;padding-top:20px}
+    </style>
+    </head><body>
+    <h1>📊 Reporte Flota PrecioJusto</h1>
+    <p style="text-align:center;color:#666">Período: <strong>${mesLabel}</strong></p>
+  `;
+  
+  let totalGeneral=0;
+  db.vehiculos.forEach(v=>{
+    const mants=db.mantenimientos.filter(m=>{
+      if(m.veh!==v.id||!m.fecha)return false;
+      const d=new Date(m.fecha);return(d.getFullYear()*100+(d.getMonth()+1))===mesNum;
+    });
+    const gastos=db.gastos.filter(g=>{
+      if(g.veh!==v.id||!g.fecha)return false;
+      const d=new Date(g.fecha);return(d.getFullYear()*100+(d.getMonth()+1))===mesNum;
+    });
+    const totalMant=mants.reduce((a,m)=>a+m.valor,0);
+    const totalGas=gastos.reduce((a,g)=>a+g.valor,0);
+    const total=totalMant+totalGas;
+    totalGeneral+=total;
+    if(!mants.length&&!gastos.length)return;
+
+    htmlPrint+=`
+      <div class="page-break">
+      <h2>${v.placa} - ${v.nombre||''}</h2>
+      <p>${v.marca} ${v.modelo} | ${v.tipo}</p>
+      <div class="summary">
+        <div class="summary-item">
+          <div class="summary-val">${fmtMoney(total)}</div>
+          <div class="summary-label">Gasto Total</div>
+        </div>
+        <div class="summary-item">
+          <div class="summary-val">${fmtMoney(totalMant)}</div>
+          <div class="summary-label">Mantenimientos</div>
+        </div>
+        <div class="summary-item">
+          <div class="summary-val">${fmtMoney(totalGas)}</div>
+          <div class="summary-label">Otros Gastos</div>
+        </div>
+      </div>
+    `;
+    
+    if(mants.length){
+      htmlPrint+=`<h3>Mantenimientos (${mants.length})</h3>
+      <table>
+        <thead><tr><th>Fecha</th><th>Tipo</th><th>Taller</th><th>Repuestos</th><th>Valor</th></tr></thead>
+        <tbody>`;
+      mants.forEach(m=>{
+        const t=db.talleres.find(tt=>tt.id===m.taller);
+        htmlPrint+=`<tr><td>${fmtDate(m.fecha)}</td><td>${m.tipo}</td><td>${t?t.nombre:'—'}</td><td>${m.repuestos||'—'}</td><td>${fmtMoney(m.valor)}</td></tr>`;
+      });
+      htmlPrint+=`</tbody></table>`;
+    }
+    
+    if(gastos.length){
+      htmlPrint+=`<h3>Otros Gastos (${gastos.length})</h3>
+      <table>
+        <thead><tr><th>Fecha</th><th>Categoría</th><th>Descripción</th><th>Valor</th></tr></thead>
+        <tbody>`;
+      gastos.forEach(g=>{
+        htmlPrint+=`<tr><td>${fmtDate(g.fecha)}</td><td>${g.cat}</td><td>${g.desc||'—'}</td><td>${fmtMoney(g.valor)}</td></tr>`;
+      });
+      htmlPrint+=`</tbody></table>`;
+    }
+    htmlPrint+=`</div>`;
+  });
+
+  htmlPrint+=`
+    <div style="margin-top:40px;padding:20px;background:#1d4ed8;color:white;border-radius:5px;text-align:center">
+      <p style="margin:0;font-size:14px">GASTO TOTAL FLOTA</p>
+      <p style="margin:10px 0 0 0;font-size:32px;font-weight:bold">${fmtMoney(totalGeneral)}</p>
+    </div>
+    <div class="footer">
+      <p>Reportado: ${new Date().toLocaleString('es-CO')}</p>
+      <p>FlotaPrecioJusto - Sistema de Control de Vehículos</p>
+    </div>
+    </body></html>
+  `;
+
+  const printWindow=window.open('','','height=600,width=800');
+  printWindow.document.write(htmlPrint);
+  printWindow.document.close();
+  printWindow.print();
+}
+
+// ============================================================ UPDATE LAST MODIFIED ============================================================
+function actualizarUltimaModificacion(){
+  const lastMod=localStorage.getItem('flotaDB_lastMod')||new Date().toLocaleString('es-CO');
+  document.getElementById('lastModified').textContent=lastMod;
+  localStorage.setItem('flotaDB_lastMod',new Date().toLocaleString('es-CO'));
+}
+
 // ============================================================ INIT ============================================================
 loadDB();
 renderDashboard();
+actualizarUltimaModificacion();
+document.addEventListener('visibilitychange',actualizarUltimaModificacion);
 </script>
 </body>
 </html>
